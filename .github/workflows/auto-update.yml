@@ -1,0 +1,37 @@
+name: Auto Update Branch
+
+on:
+  schedule:
+    # 0 */1 * * * 表示每 1 小时整点运行一次
+    - cron: '0 */1 * * *'
+  # 保留 workflow_dispatch 以便你可以随时手动点击按钮测试运行
+  workflow_dispatch: 
+
+jobs:
+  update-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史记录，防止合并报错
+
+      - name: Configure Git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Sync and Merge
+        run: |
+          # 1. 添加上游仓库链接（加上了 .git 后缀）
+          git remote add upstream https://github.com/Dreamy-rain/gemini-business2api.git
+          git fetch upstream
+
+          # 2. 切换到你需要更新的分支
+          git checkout main 
+
+          # 3. 【关键修改】执行合并，把上游（upstream）的 main 分支合并到你的 main 分支
+          git merge upstream/main --allow-unrelated-histories
+
+          # 4. 推送更新到你的 GitHub 仓库
+          git push origin main
